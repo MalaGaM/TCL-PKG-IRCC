@@ -19,9 +19,9 @@ namespace eval ::IRCC {
 	variable pkg_vers_min_need_tcl	8.6
 	variable pkg_vers_min_need_tls	1.7.20
 	variable irctclfile				[info script]
-	array set config {
-		debug  0
-		logger 0
+	array set config	{
+		debug	0
+		logger	0
 	}
 }
 
@@ -56,7 +56,7 @@ proc ::IRCC::config { args } {
 			${ns}::cmd-config $key $value
 		}
 	}
-	set config($key) $value
+	set config($key)	$value
 }
 
 # ::IRCC::connections --
@@ -78,18 +78,18 @@ proc ::IRCC::connections { } {
 
 proc ::IRCC::reload { } {
 	variable conn
-	set oldconn $conn
+	set oldconn	$conn
 	namespace eval :: {
 		source [set ::IRCC::irctclfile]
 	}
 	foreach ns [namespace children] {
 		foreach var {sock logger host port} {
-			set $var [set ${ns}::$var]
+			set $var	[set ${ns}::$var]
 		}
 		array set dispatch	[array get ${ns}::dispatch]
 		array set config	[array get ${ns}::config]
 		# make sure our new connection uses the same namespace
-		set conn	[string range $ns 10 end]
+		set conn			[string range $ns 10 end]
 		::IRCC::connection
 		foreach var {sock logger host port} {
 			set ${ns}::$var		[set $var]
@@ -97,7 +97,7 @@ proc ::IRCC::reload { } {
 		array set ${ns}::dispatch	[array get dispatch]
 		array set ${ns}::config		[array get config]
 	}
-	set conn $oldconn
+	set conn	$oldconn
 }
 
 # ::IRCC::connection --
@@ -125,7 +125,7 @@ proc ::IRCC::connection { args } {
 		if { $config(logger) || $config(debug) } {
 			package require logger
 			variable logger
-			set logger [logger::init [namespace tail [namespace current]]]
+			set logger		[logger::init [namespace tail [namespace current]]]
 			if { !$config(debug) } { ${logger}::disable debug }
 		}
 		proc TLSSocketCallBack { level args } {
@@ -325,7 +325,7 @@ proc ::IRCC::connection { args } {
 			variable sock
 			if { $sock eq "" } { return -1 }
 			catch { close $sock }
-			set sock {}
+			set sock	{}
 			return 0
 		}
 
@@ -337,8 +337,8 @@ proc ::IRCC::connection { args } {
 			variable host
 			variable port
 
-			set host $IRC_HOSTNAME
-			set s_port $IRC_PORT
+			set host	$IRC_HOSTNAME
+			set s_port	$IRC_PORT
 			if { [string range $s_port 0 0] == "+" } {
 				set secure	1;
 				set port	[string range $s_port 1 end]
@@ -348,12 +348,12 @@ proc ::IRCC::connection { args } {
 			}
 			if { $secure == 1 } {
 				package require tls $::IRCC::pkg_vers_min_need_tls
-				set socket_binary "::tls::socket -require 0 -request 0 -command \"[namespace current]::TLSSocketCallBack $sock\""
+				set socket_binary	"::tls::socket -require 0 -request 0 -command \"[namespace current]::TLSSocketCallBack $sock\""
 			} else {
-				set socket_binary ::socket
+				set socket_binary	::socket
 			}
 			if { $sock eq "" } {
-				set sock [{*}$socket_binary $host $port]
+				set sock	[{*}$socket_binary $host $port]
 				fconfigure $sock -translation crlf -buffering line
 				fileevent $sock readable [namespace current]::GetEvent
 				if { $IRC_PASSWORD != "" } {
@@ -441,11 +441,11 @@ proc ::IRCC::connection { args } {
 			variable linedata
 			variable sock
 			variable dispatch
-			array set linedata {}
-			set line "eof"
+			array set linedata	{}
+			set line			"eof"
 			if { [eof $sock] || [catch {gets $sock} line] } {
 				close $sock
-				set sock {}
+				set sock	{}
 				cmd-log error "Error receiving from network: $line"
 				if { [info exists dispatch(EOF)] } {
 					eval $dispatch(EOF)
@@ -453,23 +453,23 @@ proc ::IRCC::connection { args } {
 				return
 			}
 			cmd-log debug "Recieved: $line"
-			if { [set pos [string first " :" $line]] > -1 } {
-				set header [string range $line 0 [expr {$pos - 1}]]
-				set linedata(msg) [string range $line [expr {$pos + 2}] end]
+			if { [set pos			[string first " :" $line]] > -1 } {
+				set header			[string range $line 0 [expr {$pos - 1}]]
+				set linedata(msg)	[string range $line [expr {$pos + 2}] end]
 			} else {
-				set header [string trim $line]
-				set linedata(msg) {}
+				set header			[string trim $line]
+				set linedata(msg)	{}
 			}
 
 			if { [string match :* $header] } {
-				set header [split [string trimleft $header :]]
+				set header	[split [string trimleft $header :]]
 			} else {
-				set header [linsert [split $header] 0 {}]
+				set header	[linsert [split $header] 0 {}]
 			}
-			set linedata(who) [lindex $header 0]
-			set linedata(action) [lindex $header 1]
-			set linedata(target) [lindex $header 2]
-			set linedata(additional) [lrange $header 3 end]
+			set linedata(who)			[lindex $header 0]
+			set linedata(action)		[lindex $header 1]
+			set linedata(target)		[lindex $header 2]
+			set linedata(additional)	[lrange $header 3 end]
 			if { [info exists dispatch($linedata(action))] } {
 				eval $dispatch($linedata(action))
 			} elseif { [string match {[0-9]??} $linedata(action)] } {
@@ -491,7 +491,7 @@ proc ::IRCC::connection { args } {
 
 		proc cmd-registerevent { evnt cmd } {
 			variable dispatch
-			set dispatch($evnt) $cmd
+			set dispatch($evnt)	$cmd
 			if { $cmd eq "" } {
 				unset dispatch($evnt)
 			}
@@ -539,13 +539,13 @@ proc ::IRCC::connection { args } {
 
 		# Create default handlers.
 
-		set dispatch(PING) {network send "PONG :[msg]"}
-		set dispatch(defaultevent) #
-		set dispatch(defaultcmd) #
-		set dispatch(defaultnumeric) #
+		set dispatch(PING)				{network send "PONG :[msg]"}
+		set dispatch(defaultevent)		#
+		set dispatch(defaultcmd)		#
+		set dispatch(defaultnumeric)	#
 	}
 
-	set returncommand [format "%s::IRCC%s::network" [namespace current] $conn]
+	set returncommand	[format "%s::IRCC%s::network" [namespace current] $conn]
 	incr conn
 	return $returncommand
 }
