@@ -1425,6 +1425,11 @@ proc ::IRCC::connection { args } {
 			return $linedata(target)
 		}
 
+		proc rawline { } {
+			variable linedata
+			return $linedata(rawline)
+		}
+
 		# additional --
 
 		# Returns any additional header elements beyond the target as a list.
@@ -1477,6 +1482,7 @@ proc ::IRCC::connection { args } {
 			} else {
 				set header	[linsert [split $header] 0 {}]
 			}
+			set linedata(rawline)		[string trim $line];
 			set linedata(who)			[string trim [lindex $header 0]];
 			set linedata(action)		[string trim [lindex $header 1]];
 			set linedata(target)		[string trim [lindex $header 2]];
@@ -1548,7 +1554,11 @@ proc ::IRCC::connection { args } {
 		# args: arguments to the command
 
 		proc network { cmd args } {
-			eval [linsert $args 0 [namespace current]::cmd-$cmd]
+			if { [info proc [namespace current]::cmd-$cmd] == "" } {
+				return "sub-cmd inconnu. List: [join [string map [list "[namespace current]::cmd-" ""] [info proc [namespace current]::cmd-*]] ", "]"
+			} else {
+				eval [linsert $args 0 [namespace current]::cmd-$cmd]
+			}
 		}
 
 		# Create default handlers.
