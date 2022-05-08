@@ -17,7 +17,7 @@ namespace eval ::IRCC {
 	variable config
 	variable pkg_vers				0.0.1
 	variable pkg_vers_min_need_tcl	8.6
-	variable pkg_vers_min_need_tls	1.7.20
+	variable pkg_vers_min_need_tls	1.7.16
 	variable irctclfile				[info script]
 	array set config	{
 		debug	0
